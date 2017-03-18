@@ -7,12 +7,26 @@ import java.util.Properties;
 
 /**
  * Created by hyc on 2017/3/2.
+ * 加载数据库配置文件的类
+ * 配置信息：
+ * driver:数据库驱动
+ * dbType:数据库类型
+ * host:主机名
+ * port：端口
+ * user:用户名
+ * passwd:密码
+ * dbName:要访问的数据库名
  */
 public class DBConfig {
     public final String driver;
     public final String url;
     public final String user;
     public final String passwd;
+
+    /**
+     * @param configFile 配置文件
+     * @throws IOException 文件读取失败
+     */
     public DBConfig(File configFile)throws IOException{
         Properties props = new Properties();
         FileInputStream is = new FileInputStream(configFile);
@@ -27,6 +41,11 @@ public class DBConfig {
         this.user = props.getProperty("user");
         this.passwd = props.getProperty("passwd");
     }
+
+    /**
+     * @param filename 配置文件文件名
+     * @throws IOException 文件读取失败
+     */
     public DBConfig(String filename) throws IOException {
         this(new File(filename));
     }

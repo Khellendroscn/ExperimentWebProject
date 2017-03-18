@@ -8,7 +8,7 @@ import java.util.Arrays;
  * Created by hyc on 2016/10/14.
  */
 public class PackArray {
-    //åŸºæœ¬ç±»åž‹æ•°ç»„->åŒ…è£…å™¨æ•°ç»„
+    //»ù±¾ÀàÐÍÊý×é->°ü×°Æ÷Êý×é
     public static Boolean[] packUp(boolean[] array){
         Boolean[] packArr = new Boolean[array.length];
         for(int i=0;i<array.length;++i){

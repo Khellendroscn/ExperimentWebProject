@@ -12,6 +12,7 @@ import static java.util.stream.Collectors.*;
 
 /**
  * Created by hyc on 2017/3/18.
+ * 表示sql查询操作
  */
 public class SqlSelect<T> {
     static Map<Class<?>,String> basicSqlMap = new HashMap<>();
@@ -28,14 +29,38 @@ public class SqlSelect<T> {
             basicSqlMap.put(cls,prepareSql());
         }
     }
+
+    /**
+     * 加入where语句进行筛选
+     * @param filters where语句
+     * @return this
+     */
     public SqlSelect where(String... filters){
         wheres.addAll(Arrays.asList(filters));
         return this;
     }
-    public SqlSelect orderBy(String... filters){
-        orders.addAll(Arrays.asList(filters));
+
+    /**
+     * 加入order by语句进行排序
+     * @param order order by语句
+     * @return this
+     */
+    public SqlSelect orderBy(String... order){
+        orders.addAll(Arrays.asList(order));
         return this;
     }
+
+    /**
+     * 执行查询操作
+     * @return 数据表
+     * @throws SQLException sql异常
+     * @throws NoSuchMethodException setter不存在异常，请检查是否缺失setter
+     * @throws IllegalAccessException 访问权限冲突，请检查setter和默认构造器的访问权限
+     * @throws InstantiationException 实例初始化失败，请检查Bean是否缺少默认构造函数
+     * @throws InvocationTargetException 方法调用失败，请检查setter方法签名
+     * @throws KeyNotFoundException 主键不存在异常
+     * @throws ClassNotFoundException 类不存在异常
+     */
     public Table<T> execute() throws
             SQLException,
             NoSuchMethodException,

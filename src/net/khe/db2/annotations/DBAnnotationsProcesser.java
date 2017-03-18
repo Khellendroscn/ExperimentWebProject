@@ -10,6 +10,7 @@ import java.util.*;
 
 /**
  * Created by hyc on 2017/3/17.
+ * 注解处理器，用来取得Bean的元数据
  */
 public class DBAnnotationsProcesser<T> {
     private Class<T> class_;
@@ -26,6 +27,13 @@ public class DBAnnotationsProcesser<T> {
         casterMap.put(SqlFloat.class,DBAnnotationsProcesser::castFloat);
         casterMap.put(SqlDouble.class,DBAnnotationsProcesser::castDouble);
     }
+
+    /**
+     * 构造函数
+     * @param class_ 需要处理的类
+     * @throws KeyNotFoundException 主键不存在异常
+     * @throws ClassNotFoundException 类不存在异常
+     */
     public DBAnnotationsProcesser(Class<T> class_) throws KeyNotFoundException, ClassNotFoundException {
         this.class_ = class_;
         initFields();
@@ -123,6 +131,11 @@ public class DBAnnotationsProcesser<T> {
         return new TableField(doubleAnno.value(),"DECIMAL");
     }
 
+    /**
+     * 获取数据表的元数据
+     * @return 元数据
+     * @see TableMeta
+     */
     public TableMeta getMeta() {
         return meta;
     }

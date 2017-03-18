@@ -8,16 +8,16 @@ import java.util.Map;
 
 /**
  * Created by hyc on 2016/10/11.
- * æ··å‹ä»£ç†
+ * »ìĞÍ´úÀí
  */
 public class MixinProxy implements InvocationHandler {
-    //é€šè¿‡æ–¹æ³•åæ˜ å°„å¯¹è±¡
+    //Í¨¹ı·½·¨ÃûÓ³Éä¶ÔÏó
     Map<String,Object> delegatesByMothod = new HashMap<>();
     public MixinProxy(Pair<Object,Class<?>>...pairs){
         for(Pair<Object,Class<?>> pair:pairs){
-            //åˆå§‹åŒ–map
+            //³õÊ¼»¯map
             for(Method method:pair.second.getMethods()){
-                //å°†è¯¥å¯¹è±¡çš„æ‰€æœ‰æ–¹æ³•æ˜ å°„åˆ°è¯¥å¯¹è±¡
+                //½«¸Ã¶ÔÏóµÄËùÓĞ·½·¨Ó³Éäµ½¸Ã¶ÔÏó
                 String methodName = method.getName();
                 if(!delegatesByMothod.containsKey(methodName)){
                     delegatesByMothod.put(methodName,pair.first);
@@ -27,21 +27,21 @@ public class MixinProxy implements InvocationHandler {
     }
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        String methodName = method.getName();//è·å–æ–¹æ³•å
-        Object delegate = delegatesByMothod.get(methodName);//è·å–å¯¹è±¡
-        return method.invoke(delegate,args);//è°ƒç”¨ä»£ç†æ–¹æ³•
+        String methodName = method.getName();//»ñÈ¡·½·¨Ãû
+        Object delegate = delegatesByMothod.get(methodName);//»ñÈ¡¶ÔÏó
+        return method.invoke(delegate,args);//µ÷ÓÃ´úÀí·½·¨
     }
     @SuppressWarnings("unchecked")
     public static Object newInstance(Pair...pairs){
-        //è·å–æ··å‹å®ä¾‹
+        //»ñÈ¡»ìĞÍÊµÀı
         Class[] interfaces = new Class[pairs.length];
-        //è·å–æ¥å£æ•°ç»„
+        //»ñÈ¡½Ó¿ÚÊı×é
         for(int i = 0;i < pairs.length;++i){
             interfaces[i] = (Class)pairs[i].second;
         }
-        //è·å–ä¸€ä¸ªç±»åŠ è½½å™¨
+        //»ñÈ¡Ò»¸öÀà¼ÓÔØÆ÷
         ClassLoader cl = pairs[0].first.getClass().getClassLoader();
-        //è¿”å›ä»£ç†åçš„å¯¹è±¡
+        //·µ»Ø´úÀíºóµÄ¶ÔÏó
         return Proxy.newProxyInstance(cl,interfaces,new MixinProxy(pairs));
     }
 }

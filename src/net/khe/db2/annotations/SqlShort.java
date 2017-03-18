@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Created by hyc on 2017/3/17.
+ * 表示Sql中的SMALLINT
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

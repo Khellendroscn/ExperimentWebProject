@@ -7,9 +7,16 @@ import java.lang.annotation.Target;
 
 /**
  * Created by hyc on 2017/3/17.
+ * 表示Sql中的实数NUMERIC
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SqlFloat {
+    /**
+     * 在数据表中的字段名
+     * 如果Bean需要从多张表获取数据，请填写完整字段名（即【表名.字段名】）
+     * 默认与Bean中的变量名相同
+     * @return 字段名
+     */
     String value() default "";
 }

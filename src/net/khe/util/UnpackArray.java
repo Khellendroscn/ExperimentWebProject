@@ -6,7 +6,7 @@ import java.util.Arrays;
  * Created by hyc on 2016/10/14.
  */
 public class UnpackArray {
-    //åŒ…è£…ç±»æ•°ç»„->åŸºæœ¬ç±»å‹æ•°ç»„
+    //°ü×°ÀàÊı×é->»ù±¾ÀàĞÍÊı×é
     public static boolean[] unpack(Boolean[] array){
         boolean[] unpackArr = new boolean[array.length];
         for(int i=0;i<array.length;++i){

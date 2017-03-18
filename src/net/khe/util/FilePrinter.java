@@ -8,7 +8,7 @@ import java.io.PrintWriter;
  * Created by hyc on 2016/10/16.
  */
 public class FilePrinter {
-    private File target;//ç›®æ ‡æ–‡ä»¶
+    private File target;//Ä¿±êÎÄ¼ş
     PrintWriter writer;
     public FilePrinter(File target)throws IOException{
         this.target = target;
@@ -22,15 +22,15 @@ public class FilePrinter {
         writer = new PrintWriter(target);
     }
     private void checkFile()throws IOException{
-        //æ£€æŸ¥æ–‡ä»¶ï¼Œå¦‚æœæ–‡ä»¶ä¸å­˜åœ¨åˆ™åˆ›å»ºå®ƒ
-        if(!target.exists()){//æ–‡ä»¶ä¸å­˜åœ¨
-            File dir = target.getParentFile();//è·å–æ–‡ä»¶è·¯å¾„
+        //¼ì²éÎÄ¼ş£¬Èç¹ûÎÄ¼ş²»´æÔÚÔò´´½¨Ëü
+        if(!target.exists()){//ÎÄ¼ş²»´æÔÚ
+            File dir = target.getParentFile();//»ñÈ¡ÎÄ¼şÂ·¾¶
             if(!dir.exists()){
-                dir.mkdir();//åˆ›å»ºè·¯å¾„
+                dir.mkdir();//´´½¨Â·¾¶
             }
-            target.createNewFile();//åˆ›å»ºæ–‡ä»¶
-        }else if(!target.isFile()){//è¯¥æ–‡ä»¶æˆ–è·¯å¾„å·²å­˜åœ¨
-            throw new IOException("Target is not a file.");//å¦‚æœç›®æ ‡ä¸æ˜¯æ–‡ä»¶ï¼ŒæŠ›å‡ºå¼‚å¸¸
+            target.createNewFile();//´´½¨ÎÄ¼ş
+        }else if(!target.isFile()){//¸ÃÎÄ¼ş»òÂ·¾¶ÒÑ´æÔÚ
+            throw new IOException("Target is not a file.");//Èç¹ûÄ¿±ê²»ÊÇÎÄ¼ş£¬Å×³öÒì³£
         }
     }
 

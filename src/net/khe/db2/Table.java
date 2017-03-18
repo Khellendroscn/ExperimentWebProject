@@ -13,6 +13,7 @@ import java.util.List;
 
 /**
  * Created by hyc on 2017/3/17.
+ * 数据表类，储存数据库select操作的结果
  */
 public class Table<T> implements Iterable<T> {
     private Class<T> cls;
@@ -21,6 +22,18 @@ public class Table<T> implements Iterable<T> {
     private TableMeta meta;
     private List<T> list = new ArrayList<T>();
 
+    /**
+     * @param db 数据库
+     * @param rs ResultSet对象
+     * @param cls 数据类型
+     * @throws NoSuchMethodException setter方法不存在异常，请检查setter是否缺失
+     * @throws InstantiationException 对象初始化失败，请检查Bean是否具有默认构造器
+     * @throws SQLException sql异常
+     * @throws IllegalAccessException 访问权限冲突，请检查构造函数和getter是否可以访问
+     * @throws InvocationTargetException 方法调用失败，请检查getter的方法签名
+     * @throws KeyNotFoundException 主键不存在异常
+     * @throws ClassNotFoundException 类不存在异常
+     */
     public Table(DataBase<T> db, ResultSet rs, Class<T> cls)
             throws
             NoSuchMethodException,
@@ -88,9 +101,19 @@ public class Table<T> implements Iterable<T> {
         while (rs.next())
             readObj();
     }
+
+    /**
+     * 获取对象列表
+     * @return 对象列表
+     */
     public List<T> getList(){
         return list;
     }
+
+    /**
+     * 获取迭代器
+     * @return 迭代器
+     */
     @Override
     public Iterator<T> iterator() {
         return list.iterator();

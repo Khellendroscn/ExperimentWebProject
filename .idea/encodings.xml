@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/src/net/khe/util/FilePrinter.java" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/net/khe/util/MixinProxy.java" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/net/khe/util/PackArray.java" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/net/khe/util/UnpackArray.java" charset="GBK" />
+  </component>
+</project>

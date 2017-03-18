@@ -13,6 +13,7 @@ import static java.util.stream.Collectors.*;
 
 /**
  * Created by hyc on 2017/3/18.
+ * 表示Sql插入操作的类
  */
 public class SqlInsert<T> {
     private DataBase<T> db;
@@ -28,6 +29,18 @@ public class SqlInsert<T> {
             sqlMap.put(cls,prepareSql());
         }
     }
+
+    /**
+     * 执行插入操作
+     * @param obj 要插入的对象
+     * @throws SQLException sql异常
+     * @throws KeyNotFoundException 主键不存在异常
+     * @throws ClassNotFoundException 类不存在异常
+     * @throws NoSuchFieldException 字段不存在异常，请检查字段是否缺失注解
+     * @throws NoSuchMethodException getter不存在异常，请检查是否缺失getter方法
+     * @throws InvocationTargetException 方法调用失败异常，请检查getter方法签名
+     * @throws IllegalAccessException 访问权限冲突，请检查getter是否可以访问
+     */
     public void execute(T obj) throws
             SQLException,
             KeyNotFoundException,
