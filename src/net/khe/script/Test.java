@@ -11,21 +11,13 @@ import java.util.*;
  * ≤‚ ‘Ω‚Œˆ∆˜
  */
 public class Test {
-    private final static TableMeta meta = new TableMeta() {
-        @Override
-        public String getName() {
-            return "test";
-        }
-
-        @Override
-        public List<Field> getFields() {
-            return new ArrayList<>(Arrays.asList(
-                    new Field("a",Type.ARRAY),
-                    new Field("b",Type.ARRAY),
-                    new Field("c",Type.NUM)
-            ));
-        }
-    };
+    private final static TableMeta meta =
+            new TableMeta("test",
+                    Arrays.asList(
+                            new Field("a",Type.ARRAY),
+                            new Field("b",Type.ARRAY),
+                            new Field("c",Type.NUM)
+                    ));
     private final static Map<String,Variable> table = new HashMap<>();
     static {
         table.put("a",new Array(Arrays.asList(
