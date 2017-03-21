@@ -3,8 +3,10 @@ package net.khe.db2;
 import net.khe.db2.annotations.KeyNotFoundException;
 import net.khe.util.ClassVisitor;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -65,7 +67,7 @@ public class Table<T> implements Iterable<T> {
                 Object obj = rs.getObject(tf.getName());
                 visitor.getSetter(field).invoke(instance,obj);
             }else{
-                Class cls2 = field.getClass();
+                Class cls2 = field.getType();
                 TableField key1 = meta.getKey();
                 boolean isArr = cls2.isArray();
                 if(isArr) cls2 = cls2.getComponentType();
@@ -79,8 +81,13 @@ public class Table<T> implements Iterable<T> {
                 select.where(key2.getName()+" = "+str);
                 Table tb = select.execute();
                 if(isArr){
-                    Object[] arr = tb.getList().toArray();
-                    visitor.getSetter(field).invoke(instance,arr);
+                    Method setter = visitor.getSetter(field);
+                    Class<?> elemT = tb.getList().get(0).getClass();
+                    Object arr = Array.newInstance(elemT,tb.getList().size());
+                    for(int i=0;i<tb.getList().size();++i){
+                        Array.set(arr,i,tb.getList().get(i));
+                    }
+                    setter.invoke(instance,arr);
                 }else{
                     Object obj = tb.getList().get(0);
                     visitor.getSetter(field).invoke(instance,obj);

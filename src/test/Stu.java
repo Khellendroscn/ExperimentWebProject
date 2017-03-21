@@ -24,10 +24,6 @@ public class Stu{
         this.age = age;
         this.classId = classId;
     }
-    @Override
-    public String toString(){
-        return String.format("Stu(%s,%s,%d,%s)",id,name,age,classId);
-    }
     public String getId() {
         return id;
     }
@@ -58,5 +54,9 @@ public class Stu{
 
     public void setClassId(String classId) {
         this.classId = classId;
+    }
+    @Override
+    public String toString(){
+        return String.format("Student(%s,%s,%s,%d)",classId,id,name,age);
     }
 }

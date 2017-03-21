@@ -5,6 +5,8 @@ import net.khe.db2.annotations.DBTable;
 import net.khe.db2.annotations.SqlChars;
 import net.khe.db2.annotations.SqlString;
 
+import java.util.Arrays;
+
 /**
  * Created by hyc on 2017/3/18.
  */
@@ -45,5 +47,9 @@ public class Class_ {
 
     public void setStus(Stu[] stus) {
         this.stus = stus;
+    }
+    @Override
+    public String toString(){
+        return id+ Arrays.toString(stus);
     }
 }

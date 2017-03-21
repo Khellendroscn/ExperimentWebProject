@@ -15,9 +15,9 @@ import java.util.stream.Collectors;
  * 数据库类
  */
 public class DataBase<T> {
-    private DBConfig config;
-    private Connection conn;
-    private Class<T> cls;
+    protected DBConfig config;
+    protected Connection conn;
+    protected Class<T> cls;
     static Map<Class<?>,TableMeta> metaMap = new HashMap<>();
 
     /**
@@ -42,7 +42,8 @@ public class DataBase<T> {
      * @throws SQLException sql异常，连接失败
      */
     public void connect() throws SQLException {
-        conn = DriverManager.getConnection(config.url,config.user,config.passwd);
+        if(conn==null)
+            conn = DriverManager.getConnection(config.url,config.user,config.passwd);
     }
 
     /**
@@ -51,6 +52,14 @@ public class DataBase<T> {
      */
     public void close() throws SQLException {
         conn.close();
+    }
+    @Override
+    public void finalize(){
+        try {
+            close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
     Connection getConn(){return conn;}
     public static <T>TableMeta lookUp(Class<T> cls) throws KeyNotFoundException, ClassNotFoundException {
@@ -62,6 +71,10 @@ public class DataBase<T> {
         return metaMap.get(cls);
     }
 
+    /**
+     * @return 数据库配置信息
+     */
+    public DBConfig getConfig(){return config;}
     /**
      * 执行Select操作
      * @return SqlSelect对象
@@ -101,7 +114,8 @@ public class DataBase<T> {
         SqlSelect<T> select = new SqlSelect<T>(this,cls);
         select.where(key1+" = "+key2);
         Table<T> tb = select.execute();
-        return tb.getList().get(0);
+        if(tb.getList().size()>0)return tb.getList().get(0);
+        else return null;
     }
 
     /**
@@ -141,82 +155,65 @@ public class DataBase<T> {
     }
 
     /**
-     * 获取SqlInsert对象
-     * @return SqlInsert对象
-     * @throws KeyNotFoundException 主键不存在异常
-     * @throws ClassNotFoundException 类不存在异常
-     */
-    public SqlInsert<T> insert() throws
-            KeyNotFoundException,
-            ClassNotFoundException {
-        if(metaMap.get(cls).getTables().size()!=1)
-            throw new UnsupportedOperationException("Insert operation only be supported when the class maped to one table");
-        return new SqlInsert<T>(this,cls);
-    }
-
-    /**
-     * 在数据表中插入一个对象
-     * @param obj 要插入的对象
-     * @throws KeyNotFoundException 主键不存在异常
-     * @throws ClassNotFoundException 类不存在异常
-     * @throws InvocationTargetException getter方法调用失败，请检查方法签名
-     * @throws SQLException sql异常
-     * @throws IllegalAccessException 非法访问异常，请检查getter是否可以访问
-     * @throws NoSuchMethodException 方法不存在异常，请检查Bean是否存在getter
-     * @throws NoSuchFieldException 字段不存在异常，请检查字段是否缺失注解
-     */
-    public void insert(T obj) throws
-            KeyNotFoundException,
-            ClassNotFoundException,
-            InvocationTargetException,
-            SQLException,
-            IllegalAccessException,
-            NoSuchMethodException,
-            NoSuchFieldException {
-        insert().execute(obj);
-    }
-
-    /**
      * 从数据表中删除一个对象
-     * @param key 要删除的对象的主键
-     * @throws SQLException sql异常
-     * @throws KeyNotFoundException 主键不存在异常
-     * @throws ClassNotFoundException 类不存在异常
+     * @param key
+     * @throws SQLException
+     * @throws KeyNotFoundException
+     * @throws ClassNotFoundException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws NoSuchFieldException
      */
     public void delete(Object key) throws
             SQLException,
             KeyNotFoundException,
-            ClassNotFoundException {
+            ClassNotFoundException,
+            InvocationTargetException,
+            NoSuchMethodException,
+            InstantiationException,
+            IllegalAccessException,
+            NoSuchFieldException {
         if(metaMap.get(cls).getTables().size()!=1)
             throw new UnsupportedOperationException("Delete operation only be supported when the class maped to one table");
-        Statement stmt = conn.createStatement();
-        stmt.execute(makeDeleteSql(key));
+        SqlDelete<T> delete = new SqlDelete<T>(this,cls);
+        delete.execute(key);
     }
 
     /**
-     * 更新对象信息
-     * @param obj 新对象，要求数据库中已存在主键值相同的对象
-     * @throws KeyNotFoundException 主键不存在异常
-     * @throws ClassNotFoundException 类不存在异常
-     * @throws NoSuchFieldException 字段不存在异常，请检查字段是否缺失注解
-     * @throws NoSuchMethodException getter方法不存在，请检查getter是否缺失
-     * @throws InvocationTargetException getter调用异常，请检查getter方法签名
-     * @throws IllegalAccessException 访问权限冲突，请检查getter访问权限
-     * @throws SQLException sql异常
+     * 将对象存入数据库，如果对象key不存在则insert，如果已存在则update
+     * @param obj
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     * @throws KeyNotFoundException
+     * @throws SQLException
+     * @throws NoSuchFieldException
+     * @throws NoSuchMethodException
+     * @throws ClassNotFoundException
      */
-    public void update(T obj) throws
+    public void put(T obj) throws
+            IllegalAccessException,
+            InvocationTargetException,
+            InstantiationException,
             KeyNotFoundException,
-            ClassNotFoundException,
+            SQLException,
             NoSuchFieldException,
             NoSuchMethodException,
-            InvocationTargetException,
-            IllegalAccessException,
-            SQLException {
-        TableMeta meta = lookUp(cls);
-        if(meta.getTables().size()!=1)
-            throw new UnsupportedOperationException("Update operation only be supported when the class maped to one table");
-        SqlUpdate<T> update = new SqlUpdate<T>(this,cls);
-        update.execute(obj);
+            ClassNotFoundException {
+        if(metaMap.get(cls).getTables().size()!=1)
+            throw new UnsupportedOperationException("Write operation only be supported when the class maped to one table");
+        SqlPut<T> put = new SqlPut<T>(this,cls);
+        put.execute(obj);
+    }
+
+    /**
+     * 新建一个事务对象
+     * @return 数据库事务对象
+     */
+    public DBSession<T> createSession(){
+        return new DBSession<T>(this,cls);
     }
     private String makeCreateSql() throws KeyNotFoundException, ClassNotFoundException {
         TableMeta meta = lookUp(cls);
@@ -225,18 +222,6 @@ public class DataBase<T> {
                 .map(field->field.toSql())
                 .collect(Collectors.joining(",\n"))+
                 "\n)";
-        return sql;
-    }
-    private String makeDeleteSql(Object key) throws
-            KeyNotFoundException,
-            ClassNotFoundException {
-        TableMeta meta = lookUp(cls);
-        String value = key.toString();
-        if(key instanceof CharSequence)
-            value = String.format("\'%s\'",value);
-        String sql = "DELETE FROM "+meta.getTables().get(0)+
-                "\nWHERE "+meta.getKey().getName()+
-                " = "+value;
         return sql;
     }
 }
