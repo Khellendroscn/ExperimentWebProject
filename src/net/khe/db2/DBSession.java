@@ -38,9 +38,7 @@ public class DBSession<T> {
     /**
      * 在事务中添加一个删除操作
      * @param key 将要删除的对象的键值
-     * @throws ClassNotFoundException
-     * @throws NoSuchFieldException
-     * @throws KeyNotFoundException
+     * @throws DBWriteException 数据库写入错误
      */
     public void delete(Object key) throws
             ClassNotFoundException,
@@ -53,34 +51,20 @@ public class DBSession<T> {
 
     /**
      * 执行事务，该操作是同步的
-     * @throws SQLException
-     * @throws IllegalAccessException
-     * @throws InstantiationException
-     * @throws KeyNotFoundException
-     * @throws ClassNotFoundException
-     * @throws NoSuchMethodException
-     * @throws InvocationTargetException
-     * @throws NoSuchFieldException
+     * @throws DBWriteException 数据库写入错误
      */
-    public synchronized void execute() throws
-            SQLException,
-            IllegalAccessException,
-            InstantiationException,
-            KeyNotFoundException,
-            ClassNotFoundException,
-            NoSuchMethodException,
-            InvocationTargetException,
-            NoSuchFieldException {
-        Connection conn = db.getConn();
-        Savepoint savepoint = conn.setSavepoint("session");
-        try{
-            for(SqlWriteOperator operator:operators){
+    public synchronized void execute() throws DBWriteException {
+        try {
+            Connection conn = db.getConn();
+            Savepoint savepoint = conn.setSavepoint("session");
+            for (SqlWriteOperator operator : operators) {
                 operator.execute();
             }
             conn.releaseSavepoint(savepoint);
-        }catch (Exception e){
-            conn.rollback(savepoint);
-            throw e;
+        }catch (DBWriteException e1){
+            throw e1;
+        }catch (Exception e2){
+            throw new DBWriteException(e2);
         }
     }
 }

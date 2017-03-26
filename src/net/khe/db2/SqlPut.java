@@ -1,5 +1,7 @@
 package net.khe.db2;
 
+import net.khe.db2.annotations.Container;
+import net.khe.db2.annotations.DBTable;
 import net.khe.db2.annotations.KeyNotFoundException;
 import net.khe.util.ClassVisitor;
 
@@ -7,10 +9,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -31,31 +32,22 @@ public class SqlPut<T> implements SqlWriteOperator{
     public void setObject(T obj){
         this.obj = obj;
     }
-    public void execute(T obj) throws
-            IllegalAccessException,
-            SQLException,
-            KeyNotFoundException,
-            ClassNotFoundException,
-            NoSuchMethodException,
-            InstantiationException,
-            InvocationTargetException,
-            NoSuchFieldException {
+    public void execute(T obj) throws DBWriteException {
         setObject(obj);
         execute();
     }
-    public void execute() throws
-            NoSuchFieldException,
-            InvocationTargetException,
-            IllegalAccessException,
-            KeyNotFoundException,
-            NoSuchMethodException,
-            ClassNotFoundException,
-            SQLException,
-            InstantiationException {
-        if(db.getInstance(getKey())==null){
-            insert();
-        }else{
-            update();
+    public void execute() throws DBWriteException {
+        try {
+            T temp = db.getInstance(getKey());
+            if (temp == null) {
+                insert();
+            } else {
+                update();
+            }
+        }catch (DBWriteException e1){
+            throw e1;
+        }catch (Exception e2){
+            throw new DBWriteException(e2);
         }
     }
     private Object getKey() throws
@@ -71,52 +63,92 @@ public class SqlPut<T> implements SqlWriteOperator{
         Class c = obj.getClass();
         return getter.invoke(obj);
     }
-    private void insert() throws KeyNotFoundException, ClassNotFoundException, SQLException, NoSuchMethodException, NoSuchFieldException, InstantiationException, IllegalAccessException, InvocationTargetException {
-        if(!insertMap.containsKey(cls))
-            insertMap.put(cls,prepareInsertSql());
-        String sql = insertMap.get(cls);
-        PreparedStatement stmt = db.getConn().prepareStatement(sql);
-        setStatement(stmt);
-        stmt.executeUpdate();
+    private void insert() throws DBWriteException {
+        try {
+            if (!insertMap.containsKey(cls))
+                insertMap.put(cls, prepareInsertSql());
+            String sql = insertMap.get(cls);
+            PreparedStatement stmt = db.getConn().prepareStatement(sql);
+            setStatement(stmt);
+            stmt.executeUpdate();
+        }catch (DBWriteException e1){
+            throw e1;
+        }catch (Exception e2){
+            throw new DBWriteException(e2);
+        }
     }
-    private void update() throws KeyNotFoundException, ClassNotFoundException, SQLException, NoSuchMethodException, NoSuchFieldException, InstantiationException, IllegalAccessException, InvocationTargetException {
-        if(!updateMap.containsKey(cls))
-            updateMap.put(cls,prepareUpdateSql());
-        String sql = updateMap.get(cls);
-        PreparedStatement stmt = db.getConn().prepareStatement(sql);
-        int i = setStatement(stmt);
-        stmt.setObject(i,getKey());
-        stmt.executeUpdate();
+    private void update() throws DBWriteException {
+        try {
+            if (!updateMap.containsKey(cls))
+                updateMap.put(cls, prepareUpdateSql());
+            String sql = updateMap.get(cls);
+            PreparedStatement stmt = db.getConn().prepareStatement(sql);
+            int i = setStatement(stmt);
+            stmt.setObject(i, getKey());
+            stmt.executeUpdate();
+        }catch (DBWriteException e1){
+            throw e1;
+        }catch (Exception e2){
+            throw new DBWriteException(e2);
+        }
     }
-    private int setStatement(PreparedStatement stmt) throws KeyNotFoundException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, SQLException, NoSuchFieldException, InstantiationException {
-        TableMeta meta = db.lookUp(cls);
-        int i=1;
-        for(Field field:cls.getDeclaredFields()){
-            ClassVisitor visitor = new ClassVisitor(cls);
-            Method getter = visitor.getGetter(field);
-            Object prop = getter.invoke(obj);
-            if(meta.getField(field.getName())!=null){
-                stmt.setObject(i++,prop);
-            }else{
-                if(!prop.getClass().isArray()){
-                    DataBase db2 = new DataBase(db.getConfig(),prop.getClass());
-                    db2.connect();
-                    SqlPut put = new SqlPut(db2,prop.getClass());
-                    put.execute(prop);
-                    db2.close();
-                }else{
-                    Object[] props = (Object[])prop;
-                    for(Object p:props){
-                        DataBase db2 = new DataBase(db.getConfig(),p.getClass());
+    private int setStatement(PreparedStatement stmt) throws DBWriteException{
+        //TODO:重构这坨方法
+        try {
+            TableMeta meta = db.lookUp(cls);
+            int i = 1;
+            for (Field field : cls.getDeclaredFields()) {
+                ClassVisitor visitor = new ClassVisitor(cls);
+                Method getter = visitor.getGetter(field);
+                Object prop = getter.invoke(obj);
+                if (meta.getField(field.getName()) != null) {
+                    stmt.setObject(i++, prop);
+                } else {
+                    Class propCls = prop.getClass();
+                    if (!propCls.isArray()) {
+                        if(prop==null) continue;
+                        Container anno = field.getAnnotation(Container.class);
+                        if (anno == null) {
+                            DataBase db2 = new DataBase(db.getConfig(), prop.getClass());
+                            db2.connect();
+                            SqlPut put = new SqlPut(db2, prop.getClass());
+                            put.execute(prop);
+                            db2.close();
+                        } else {
+                            Class elemCls = Class.forName(anno.elementType());
+                            if (elemCls.getAnnotation(DBTable.class) == null) {
+                                throw new DBWriteException(
+                                        "Container in a Bean-class must contains another " +
+                                                "Bean-class instances with a 'DBTable' annotation"
+                                );
+                            }
+                            Collection coll = (Collection) prop;
+                            DataBase db2 = new DataBase(db.getConfig(), elemCls);
+                            db2.connect();
+                            for (Object elem : coll) {
+                                SqlPut put = new SqlPut(db2, elem.getClass());
+                                put.execute(elem);
+                            }
+                            db2.close();
+                        }
+                    } else {
+                        Object[] props = (Object[]) prop;
+                        DataBase db2 = new DataBase(db.getConfig(), propCls.getComponentType());
                         db2.connect();
-                        SqlPut put = new SqlPut(db2,p.getClass());
-                        put.execute(p);
+                        for (Object p : props) {
+                            SqlPut put = new SqlPut(db2, p.getClass());
+                            put.execute(p);
+                        }
                         db2.close();
                     }
                 }
             }
+            return i;
+        }catch (DBWriteException e1){
+            throw e1;
+        }catch (Exception e2){
+            throw new DBWriteException(e2);
         }
-        return i;
     }
     private String prepareInsertSql() throws
             KeyNotFoundException,

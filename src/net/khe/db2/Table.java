@@ -44,7 +44,7 @@ public class Table<T> implements Iterable<T> {
             IllegalAccessException,
             InvocationTargetException,
             KeyNotFoundException,
-            ClassNotFoundException {
+            ClassNotFoundException, DBQuaryException {
         this.rs = rs;
         this.cls = cls;
         this.db = db;
@@ -58,7 +58,7 @@ public class Table<T> implements Iterable<T> {
             NoSuchMethodException,
             InvocationTargetException,
             KeyNotFoundException,
-            ClassNotFoundException {
+            ClassNotFoundException, DBQuaryException {
         ClassVisitor<T> visitor = new ClassVisitor<T>(cls);
         T instance = cls.newInstance();
         for(Field field:cls.getDeclaredFields()){
@@ -71,7 +71,7 @@ public class Table<T> implements Iterable<T> {
                 TableField key1 = meta.getKey();
                 boolean isArr = cls2.isArray();
                 if(isArr) cls2 = cls2.getComponentType();
-                TableField key2 = db.lookUp(cls2).getForeigns(cls);
+                TableField key2 = db.lookUp(cls2).getForeign(cls);
                 SqlSelect select = new SqlSelect(db,cls2);
                 Object value = rs.getObject(key1.getName());
                 String str = value.toString();
@@ -104,7 +104,7 @@ public class Table<T> implements Iterable<T> {
             KeyNotFoundException,
             SQLException,
             NoSuchMethodException,
-            ClassNotFoundException {
+            ClassNotFoundException, DBQuaryException {
         while (rs.next())
             readObj();
     }

@@ -81,7 +81,7 @@ public class TableMeta {
      * @param cls 类名
      * @return 外键字段信息
      */
-    public TableField getForeigns(Class<?> cls) {
+    public TableField getForeign(Class<?> cls) {
         return foreignMap.get(cls);
     }
 

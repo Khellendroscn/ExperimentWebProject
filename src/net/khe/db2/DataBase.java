@@ -2,9 +2,8 @@ package net.khe.db2;
 
 import net.khe.db2.annotations.DBAnnotationsProcesser;
 import net.khe.db2.annotations.KeyNotFoundException;
-import net.khe.util.ClassVisitor;
+import net.khe.util.Factory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 
 import java.util.*;
@@ -82,7 +81,7 @@ public class DataBase<T> {
      * @throws KeyNotFoundException 主键不存在异常
      * @throws ClassNotFoundException 类不存在异常
      */
-    public SqlSelect select() throws KeyNotFoundException, ClassNotFoundException {
+    public SqlSelect select() throws DBQuaryException {
         return new SqlSelect(this,cls);
     }
 
@@ -90,91 +89,51 @@ public class DataBase<T> {
      * 根据主键从数据库中获取实例
      * @param primaryKey 主键值
      * @return 实例
-     * @throws KeyNotFoundException 主键不存在异常
-     * @throws InvocationTargetException setter方法调用失败
-     * @throws SQLException sql异常
-     * @throws InstantiationException 实例对象构造失败，请检查Bean是否具有默认构造器
-     * @throws IllegalAccessException 非法访问异常，请检查默认构造器是否可访问
-     * @throws NoSuchMethodException 方法不存在异常，请检查Bean是否具有setter方法
-     * @throws ClassNotFoundException 类不存在异常
+     * @throws DBQuaryException 数据库查询异常
      */
-    public T getInstance(Object primaryKey) throws
-            KeyNotFoundException,
-            InvocationTargetException,
-            SQLException,
-            InstantiationException,
-            IllegalAccessException,
-            NoSuchMethodException,
-            ClassNotFoundException {
-        String key1 = lookUp(cls).getKey().getName();
-        String key2 = primaryKey.toString();
-        if(primaryKey instanceof CharSequence){
-            key2 = String.format("\'%s\'",key2);
+    public T getInstance(Object primaryKey) throws DBQuaryException {
+        try {
+            SqlSelect<T> sel = new SqlSelect<T>(this,cls);
+            String value = primaryKey.toString();
+            if(primaryKey instanceof CharSequence){
+                value = String.format("'%s'",value);
+            }
+            sel.where(lookUp(cls).getKey().getName()+" = "+value);
+            return sel.query().next();
+        } catch (Exception e){
+            throw new DBQuaryException(e);
         }
-        SqlSelect<T> select = new SqlSelect<T>(this,cls);
-        select.where(key1+" = "+key2);
-        Table<T> tb = select.execute();
-        if(tb.getList().size()>0)return tb.getList().get(0);
-        else return null;
     }
 
     /**
-     * 获取数据表
+     * 获取数据表（已过时，现在使用quary方法作为代替）
      * @return 数据表
-     * @throws KeyNotFoundException 主键不存在异常
-     * @throws InvocationTargetException setter方法调用失败
-     * @throws SQLException sql异常
-     * @throws InstantiationException 实例对象构造失败，请检查Bean是否具有默认构造器
-     * @throws IllegalAccessException 非法访问异常，请检查默认构造器是否可访问
-     * @throws NoSuchMethodException 方法不存在异常，请检查Bean是否具有setter方法
-     * @throws ClassNotFoundException 类不存在异常
+     * @throws DBQuaryException 数据库查询异常
      */
-    public Table<T> getTable() throws
-            KeyNotFoundException,
-            InvocationTargetException,
-            SQLException,
-            InstantiationException,
-            IllegalAccessException,
-            NoSuchMethodException,
-            ClassNotFoundException {
+    @Deprecated
+    public Table<T> getTable() throws DBQuaryException {
         return select().execute();
     }
 
     /**
      * 创建数据表
-     * @throws KeyNotFoundException 主键不存在异常
-     * @throws ClassNotFoundException 类不存在异常
-     * @throws SQLException sql异常
+     * @throws DBWriteException 数据库写入异常
      */
-    public void create() throws
-            KeyNotFoundException,
-            ClassNotFoundException,
-            SQLException {
-        Statement stmt = conn.createStatement();
-        stmt.execute(makeCreateSql());
+    public void create() throws DBWriteException {
+        try {
+            Statement stmt = conn.createStatement();
+            stmt.execute(makeCreateSql());
+        }catch (Exception e){
+            throw new DBWriteException(e);
+        }
     }
 
     /**
-     * 从数据表中删除一个对象
-     * @param key
-     * @throws SQLException
-     * @throws KeyNotFoundException
-     * @throws ClassNotFoundException
-     * @throws InvocationTargetException
-     * @throws NoSuchMethodException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws NoSuchFieldException
+     * 从数据表中删除对象
+     * @param key 对象主键值
+     * @throws DBWriteException 数据库写入异常
      */
-    public void delete(Object key) throws
-            SQLException,
-            KeyNotFoundException,
-            ClassNotFoundException,
-            InvocationTargetException,
-            NoSuchMethodException,
-            InstantiationException,
-            IllegalAccessException,
-            NoSuchFieldException {
+    public void delete(Object key) throws DBWriteException {
         if(metaMap.get(cls).getTables().size()!=1)
             throw new UnsupportedOperationException("Delete operation only be supported when the class maped to one table");
         SqlDelete<T> delete = new SqlDelete<T>(this,cls);
@@ -184,24 +143,9 @@ public class DataBase<T> {
     /**
      * 将对象存入数据库，如果对象key不存在则insert，如果已存在则update
      * @param obj
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
-     * @throws InstantiationException
-     * @throws KeyNotFoundException
-     * @throws SQLException
-     * @throws NoSuchFieldException
-     * @throws NoSuchMethodException
-     * @throws ClassNotFoundException
+     * @throws DBWriteException 数据库写入异常
      */
-    public void put(T obj) throws
-            IllegalAccessException,
-            InvocationTargetException,
-            InstantiationException,
-            KeyNotFoundException,
-            SQLException,
-            NoSuchFieldException,
-            NoSuchMethodException,
-            ClassNotFoundException {
+    public void put(T obj) throws DBWriteException {
         if(metaMap.get(cls).getTables().size()!=1)
             throw new UnsupportedOperationException("Write operation only be supported when the class maped to one table");
         SqlPut<T> put = new SqlPut<T>(this,cls);
@@ -223,5 +167,30 @@ public class DataBase<T> {
                 .collect(Collectors.joining(",\n"))+
                 "\n)";
         return sql;
+    }
+
+    /**
+     * 查询数据表，返回一个生成器
+     * @see DBQuery
+     * @param factory 可选工厂对象，如果传入工厂对象则使用工厂来创建对象，否则使用Class.newInstance方法
+     * @return DBQuary对象
+     * @throws DBQuaryException 数据库查询异常
+     */
+    public DBQuery<T> query(Factory<T> factory) throws DBQuaryException {
+        SqlSelect<T> sel = new SqlSelect<T>(this,cls);
+        ResultSet rs = sel.getResultSet();
+        return new ObjectQuery<T>(rs,cls,this,factory);
+    }
+
+    /**
+     * 查询数据表，返回一个生成器
+     * @see DBQuery
+     * @return DBQuary对象
+     * @throws DBQuaryException 数据库查询异常
+     */
+    public DBQuery<T> query() throws DBQuaryException {
+        SqlSelect<T> sel = new SqlSelect<T>(this,cls);
+        ResultSet rs = sel.getResultSet();
+        return new ObjectQuery<T>(rs,this,cls);
     }
 }

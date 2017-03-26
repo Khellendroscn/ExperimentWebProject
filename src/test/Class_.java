@@ -1,11 +1,9 @@
 package test;
 
-import net.khe.db2.annotations.Constraints;
-import net.khe.db2.annotations.DBTable;
-import net.khe.db2.annotations.SqlChars;
-import net.khe.db2.annotations.SqlString;
+import net.khe.db2.annotations.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by hyc on 2017/3/18.
@@ -17,9 +15,10 @@ public class Class_ {
     private String id;
     @SqlString
     private String teacher;
-    private Stu[] stus;
+    @Container(elementType = "test.Stu", containerType = "java.util.ArrayList")
+    private List<Stu> stus;
     public Class_(){}
-    public Class_(String id,String teacher,Stu[] stus){
+    public Class_(String id,String teacher,List<Stu> stus){
         this.id = id;
         this.teacher = teacher;
         this.stus = stus;
@@ -41,15 +40,15 @@ public class Class_ {
         this.teacher = teacher;
     }
 
-    public Stu[] getStus() {
+    public List<Stu> getStus() {
         return stus;
     }
 
-    public void setStus(Stu[] stus) {
+    public void setStus(List<Stu> stus) {
         this.stus = stus;
     }
     @Override
     public String toString(){
-        return id+ Arrays.toString(stus);
+        return id + stus.toString();
     }
 }

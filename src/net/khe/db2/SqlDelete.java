@@ -2,9 +2,7 @@ package net.khe.db2;
 
 import net.khe.db2.annotations.KeyNotFoundException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,17 +32,27 @@ public class SqlDelete<T> implements SqlWriteOperator{
         this.key = key;
     }
     @Override
-    public void execute() throws NoSuchFieldException, InvocationTargetException, IllegalAccessException, KeyNotFoundException, NoSuchMethodException, ClassNotFoundException, SQLException, InstantiationException {
-        if(!sqlMap.containsKey(cls))
-            sqlMap.put(cls,prepareSql());
-        TableMeta meta = db.lookUp(cls);
-        String sql = sqlMap.get(cls);
-        PreparedStatement stmt = db.getConn().prepareStatement(sql);
-        stmt.setObject(1,key);
-        stmt.executeUpdate();
+    public void execute() throws DBWriteException {
+        try {
+            if (!sqlMap.containsKey(cls))
+                sqlMap.put(cls, prepareSql());
+            TableMeta meta = db.lookUp(cls);
+            String sql = sqlMap.get(cls);
+            PreparedStatement stmt = db.getConn().prepareStatement(sql);
+            stmt.setObject(1, key);
+            stmt.executeUpdate();
+        }catch (Exception e){
+            throw new DBWriteException(e);
+        }
     }
-    public void execute(Object key) throws ClassNotFoundException, NoSuchFieldException, KeyNotFoundException, SQLException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-        setKey(key);
-        execute();
+    public void execute(Object key) throws DBWriteException {
+        try {
+            setKey(key);
+            execute();
+        }catch (DBWriteException e1){
+            throw e1;
+        }catch (Exception e2){
+            throw new DBWriteException(e2);
+        }
     }
 }

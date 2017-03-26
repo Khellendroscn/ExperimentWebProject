@@ -20,13 +20,15 @@ public class SqlSelect<T> {
     private DataBase db;
     private Set<String> wheres = new HashSet<>();
     private Set<String> orders = new LinkedHashSet<>();
-    SqlSelect(DataBase db, Class<T> cls) throws
-            KeyNotFoundException,
-            ClassNotFoundException {
-        this.db = db;
-        this.cls = cls;
-        if(!basicSqlMap.containsKey(cls)){
-            basicSqlMap.put(cls,prepareSql());
+    SqlSelect(DataBase db, Class<T> cls) throws DBQuaryException {
+        try {
+            this.db = db;
+            this.cls = cls;
+            if (!basicSqlMap.containsKey(cls)) {
+                basicSqlMap.put(cls, prepareSql());
+            }
+        }catch (Exception e){
+            throw new DBQuaryException(e);
         }
     }
 
@@ -53,35 +55,45 @@ public class SqlSelect<T> {
     /**
      * 执行查询操作
      * @return 数据表
-     * @throws SQLException sql异常
-     * @throws NoSuchMethodException setter不存在异常，请检查是否缺失setter
-     * @throws IllegalAccessException 访问权限冲突，请检查setter和默认构造器的访问权限
-     * @throws InstantiationException 实例初始化失败，请检查Bean是否缺少默认构造函数
-     * @throws InvocationTargetException 方法调用失败，请检查setter方法签名
-     * @throws KeyNotFoundException 主键不存在异常
-     * @throws ClassNotFoundException 类不存在异常
+     * @throws DBQuaryException 数据库查询错误
      */
-    public Table<T> execute() throws
-            SQLException,
-            NoSuchMethodException,
-            IllegalAccessException,
-            InstantiationException,
-            InvocationTargetException,
-            KeyNotFoundException, ClassNotFoundException {
+    public Table<T> execute() throws DBQuaryException {
+        try {
+            String sql = getSql();
+            Statement stmt = db.getConn().createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            return new Table<T>(db, rs, cls);
+        }catch (Exception e){
+            throw new DBQuaryException(e);
+        }
+    }
+    public DBQuery<T> query()throws DBQuaryException{
+        ResultSet rs = getResultSet();
+        return new ObjectQuery<T>(rs,db,cls);
+    }
+    ResultSet getResultSet() throws DBQuaryException {
+        try {
+            String sql = getSql();
+            Statement stmt = db.getConn().createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            return rs;
+        }catch (Exception e){
+            throw new DBQuaryException(e);
+        }
+    }
+    private String getSql(){
         String sql = basicSqlMap.get(cls);
         if(!wheres.isEmpty()){
             sql += "\nWHERE "+
                     wheres.stream()
-                    .collect(joining(" AND "));
+                            .collect(joining(" AND "));
         }
         if(!orders.isEmpty()){
             sql += "\nORDER BY"+
                     orders.stream()
-                    .collect(joining(", "));
+                            .collect(joining(", "));
         }
-        Statement stmt = db.getConn().createStatement();
-        ResultSet rs = stmt.executeQuery(sql);
-        return new Table<T>(db,rs,cls);
+        return sql;
     }
     private List<String> prepareCols() throws
             KeyNotFoundException,
