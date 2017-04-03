@@ -66,6 +66,7 @@ public class DBAnnotationsProcesser<T> {
                     map.put("primaryKey",constraints.primaryKey());
                     map.put("alloNull",constraints.alloNull());
                     map.put("unique",constraints.unique());
+                    map.put("autoIncrement",constraints.autoIncrement());
                     if(map.get("primaryKey")){
                         key = tf;
                     }

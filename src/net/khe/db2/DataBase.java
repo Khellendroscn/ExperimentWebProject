@@ -161,7 +161,7 @@ public class DataBase<T> {
     }
     private String makeCreateSql() throws KeyNotFoundException, ClassNotFoundException {
         TableMeta meta = lookUp(cls);
-        String sql = "CREATE TABLE "+meta.getTables().get(0)+"(\n"+
+        String sql = "CREATE TABLE IF NOT EXISTS "+meta.getTables().get(0)+"(\n"+
                 meta.getFields().stream()
                 .map(field->field.toSql())
                 .collect(Collectors.joining(",\n"))+

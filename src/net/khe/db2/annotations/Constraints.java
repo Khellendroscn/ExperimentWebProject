@@ -29,4 +29,5 @@ public @interface Constraints {
      * @return true-该字段不可重复
      */
     boolean unique() default false;
+    boolean autoIncrement() default false;
 }

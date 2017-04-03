@@ -97,6 +97,9 @@ public class TableField {
         }
         if(getConstraints().get("primaryKey")){
             sql+=" PRIMARY KEY";
+            if(getConstraints().get("autoIncrement")){
+                sql+=" AUTO_INCREMENT";
+            }
         } else if(getConstraints().get("unique")){
             sql+=" UNIQUE";
         }

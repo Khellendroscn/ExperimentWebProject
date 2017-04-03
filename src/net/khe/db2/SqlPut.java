@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -101,7 +102,12 @@ public class SqlPut<T> implements SqlWriteOperator{
                 ClassVisitor visitor = new ClassVisitor(cls);
                 Method getter = visitor.getGetter(field);
                 Object prop = getter.invoke(obj);
-                if (meta.getField(field.getName()) != null) {
+                TableField tf = meta.getField(field.getName());
+                if (tf != null) {
+                    boolean hasConstraints = tf.getConstraints().containsKey("autoIncrement");
+                    if(hasConstraints&&tf.getConstraints().get("autoIncrement")){
+                        continue;
+                    }
                     stmt.setObject(i++, prop);
                 } else {
                     Class propCls = prop.getClass();
@@ -154,12 +160,22 @@ public class SqlPut<T> implements SqlWriteOperator{
             KeyNotFoundException,
             ClassNotFoundException {
         TableMeta meta = db.lookUp(cls);
+        Predicate<TableField> filter = (field)->{
+            Map<String,Boolean> map = field.getConstraints();
+            if(map==null){
+                return true;
+            }
+            Boolean autoIncrement = map.get("autoIncrement");
+            return !(autoIncrement!=null&&autoIncrement);
+        };
         String sql = "INSERT INTO "+meta.getTables().get(0)+"( "+
                 meta.getFields().stream()
+                .filter(filter)
                 .map(field->field.getName())
                 .collect(joining(", "))+
                 " ) VALUES( "+
                 meta.getFields().stream()
+                .filter(filter)
                 .map(field->"?")
                 .collect(joining(", "))+" )";
         return sql;
@@ -170,6 +186,14 @@ public class SqlPut<T> implements SqlWriteOperator{
         TableMeta meta = db.lookUp(cls);
         String sql = "UPDATE "+meta.getTables().get(0)+" SET\n"+
                 meta.getFields().stream()
+                .filter((field)->{
+                    Map<String,Boolean> map = field.getConstraints();
+                    if(map==null){
+                        return true;
+                    }
+                    Boolean iskey = map.get("primaryKey");
+                    return !(iskey!=null&&iskey);
+                })
                 .map(field->field.getName()+" = ?")
                 .collect(joining(",\n"))+
                 "\nWHERE "+meta.getKey().getName()+" = ?";
