@@ -32,12 +32,17 @@ public class DBConfig {
         FileInputStream is = new FileInputStream(configFile);
         props.load(is);
         this.driver = props.getProperty("driver");
+        String charset = props.getProperty("charset");
         String urlPattern = "jdbc:%s://%s:%s/%s";
-        this.url = String.format(urlPattern,
+        String url = String.format(urlPattern,
                 props.getProperty("dbType"),
                 props.getProperty("host"),
                 props.getProperty("port"),
                 props.getProperty("dbName"));
+        if(charset!=null){
+            url+="?use?useUnicode=true&amp;characterEncoding="+charset;
+        }
+        this.url = url;
         this.user = props.getProperty("user");
         this.passwd = props.getProperty("passwd");
     }
