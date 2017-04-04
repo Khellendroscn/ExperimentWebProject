@@ -176,8 +176,8 @@ public class ObjectQuery<T> extends AbstractDBQuery<T> {
             ClassVisitor<T> visitor = new ClassVisitor<T>(cls);
             Method setter = visitor.getSetter(field);
             Container anno = field.getAnnotation(Container.class);
-            Class containerCls = Class.forName(anno.containerType());
-            Class elemCls = Class.forName(anno.elementType());
+            Class containerCls = anno.containerType();
+            Class elemCls = anno.elementType();
             if(elemCls.getAnnotation(DBTable.class)==null){
                 throw new DBQuaryException(
                         "Container in a Bean-class must contains another " +

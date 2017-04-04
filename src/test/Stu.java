@@ -14,7 +14,7 @@ public class Stu{
     private String name;
     @SqlInt
     private int age;
-    @Foreign("test.Class_")
+    @Foreign(Class_.class)
     @SqlChars(2)
     private String classId;
     public Stu(){}

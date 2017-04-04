@@ -74,7 +74,7 @@ public class DBAnnotationsProcesser<T> {
                 Foreign foreignAnno =
                         field.getAnnotation(Foreign.class);
                 if(foreignAnno!=null){
-                    Class c = Class.forName(foreignAnno.value());
+                    Class c = foreignAnno.value();
                     foreignMap.put(c,tf);
                 }
             }

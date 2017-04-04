@@ -121,7 +121,7 @@ public class SqlPut<T> implements SqlWriteOperator{
                             put.execute(prop);
                             db2.close();
                         } else {
-                            Class elemCls = Class.forName(anno.elementType());
+                            Class elemCls = anno.elementType();
                             if (elemCls.getAnnotation(DBTable.class) == null) {
                                 throw new DBWriteException(
                                         "Container in a Bean-class must contains another " +
@@ -186,14 +186,6 @@ public class SqlPut<T> implements SqlWriteOperator{
         TableMeta meta = db.lookUp(cls);
         String sql = "UPDATE "+meta.getTables().get(0)+" SET\n"+
                 meta.getFields().stream()
-                .filter((field)->{
-                    Map<String,Boolean> map = field.getConstraints();
-                    if(map==null){
-                        return true;
-                    }
-                    Boolean iskey = map.get("primaryKey");
-                    return !(iskey!=null&&iskey);
-                })
                 .map(field->field.getName()+" = ?")
                 .collect(joining(",\n"))+
                 "\nWHERE "+meta.getKey().getName()+" = ?";

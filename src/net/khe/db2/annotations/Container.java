@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Collection;
 
 /**
  * Created by hyc on 2017/3/26.
@@ -15,15 +16,15 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Container {
     /**
-     * 集合元素的类型名称（带包名的全称）
+     * 集合元素的类型
      * @return
      */
-    String elementType();
+    Class<?> elementType();
 
     /**
-     * 集合类型名称（带报名的全称）。
+     * 集合类型
      * ！注意，该类型不能是接口或抽象类
      * @return
      */
-    String containerType();
+    Class<? extends Collection> containerType();
 }

@@ -15,9 +15,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Foreign {
     /**
-     * 将外键绑定到一个Bean上，注解的参数为类的全名
+     * 将外键绑定到一个Bean上，注解的参数为类
      * 绑定完成之后，被外键注解的字段会映射到被绑定的Bean的主键字段
-     * @return 被绑定的类的全名
+     * @return 被绑定的类
      */
-    String value();
+    Class<?> value();
 }

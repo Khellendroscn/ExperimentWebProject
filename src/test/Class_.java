@@ -2,6 +2,7 @@ package test;
 
 import net.khe.db2.annotations.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class Class_ {
     private String id;
     @SqlString
     private String teacher;
-    @Container(elementType = "test.Stu", containerType = "java.util.ArrayList")
+    @Container(elementType = Stu.class, containerType = ArrayList.class)
     private List<Stu> stus;
     public Class_(){}
     public Class_(String id,String teacher,List<Stu> stus){
