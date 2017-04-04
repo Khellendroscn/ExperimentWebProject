@@ -1,6 +1,5 @@
 package net.khe.db2.annotations;
 
-import net.khe.db2.DataBase;
 import net.khe.db2.TableField;
 import net.khe.db2.TableMeta;
 
@@ -24,8 +23,9 @@ public class DBAnnotationsProcesser<T> {
         casterMap.put(SqlLong.class,DBAnnotationsProcesser::castLong);
         casterMap.put(SqlChars.class,DBAnnotationsProcesser::castChars);
         casterMap.put(SqlString.class,DBAnnotationsProcesser::castString);
-        casterMap.put(SqlFloat.class,DBAnnotationsProcesser::castFloat);
-        casterMap.put(SqlDouble.class,DBAnnotationsProcesser::castDouble);
+        casterMap.put(SqlNumeric.class,DBAnnotationsProcesser::castFloat);
+        casterMap.put(SqlDecimal.class,DBAnnotationsProcesser::castDouble);
+        casterMap.put(SqlText.class,DBAnnotationsProcesser::castText);
     }
 
     /**
@@ -124,14 +124,25 @@ public class DBAnnotationsProcesser<T> {
             return new TableField(strAnno.name(),"VARCHAR(255)");
     }
     private static TableField castFloat(Annotation anno){
-        SqlFloat floatAnno = (SqlFloat)anno;
-        return new TableField(floatAnno.value(),"NUMERIC");
+        SqlNumeric floatAnno = (SqlNumeric)anno;
+        String type = "NUMERIC";
+        if(floatAnno.size()>=0&&floatAnno.d()>=0){
+            type += String.format("(%d,%d)",floatAnno.size(),floatAnno.d());
+        }
+        return new TableField(floatAnno.value(),type);
     }
     private static TableField castDouble(Annotation anno){
-        SqlDouble doubleAnno = (SqlDouble)anno;
-        return new TableField(doubleAnno.value(),"DECIMAL");
+        SqlDecimal doubleAnno = (SqlDecimal)anno;
+        String type = "DECIMAL";
+        if(doubleAnno.size()>=0&&doubleAnno.d()>=0){
+            type += String.format("(%d,%d)",doubleAnno.size(),doubleAnno.d());
+        }
+        return new TableField(doubleAnno.value(),type);
     }
-
+    private static TableField castText(Annotation anno){
+        SqlText textAnno = (SqlText)anno;
+        return new TableField(textAnno.value(),"TEXT");
+    }
     /**
      * 获取数据表的元数据
      * @return 元数据
